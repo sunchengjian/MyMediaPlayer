@@ -4,6 +4,8 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.GestureDetector;
 import android.view.View;
@@ -122,13 +124,33 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
         findViews();
         //  vv = (VideoView) findViewById(R.id.vv);
         uri = getIntent().getData();
-
+        initdata();
         setVideoLister();
         //将视频地址传给VV
 
         vv.setVideoURI(uri);
         vv.setMediaController(new MediaController(this));
     }
+
+    private void initdata() {
+        utils = new Utils();
+    }
+
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case PROGRESS:
+                    int currentPosition = vv.getCurrentPosition();
+                    seekbarVideo.setProgress(currentPosition);
+
+                    tvCurrentTime.setText(utils.stringForTime(currentPosition));
+                    sendEmptyMessageDelayed(PROGRESS, 1000);
+                    break;
+            }
+        }
+    };
 
     private void setVideoLister() {
         vv.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -137,8 +159,9 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
             public void onPrepared(MediaPlayer mp) {
                 int duration = vv.getDuration();
                 seekbarVideo.setMax(duration);
-
+                 tvDuration.setText(utils.stringForTime(duration));
                 vv.start();
+                handler.sendEmptyMessage(PROGRESS);
             }
         });
         vv.setOnErrorListener(new MediaPlayer.OnErrorListener() {
@@ -210,5 +233,11 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
 
             }
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacksAndMessages(null);
     }
 }
