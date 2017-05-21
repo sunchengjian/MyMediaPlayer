@@ -1,16 +1,19 @@
 package com.sunchengjian.mymediaplayer.pager;
 
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.sunchengjian.mymediaplayer.R;
+import com.sunchengjian.mymediaplayer.activity.SystemVideoPlayerActivity;
 import com.sunchengjian.mymediaplayer.adapter.LocalVideoAdapter;
 import com.sunchengjian.mymediaplayer.domain.MediaItem;
 import com.sunchengjian.mymediaplayer.framgment.BaseFragment;
@@ -41,11 +44,23 @@ public class LocalVideoPager extends BaseFragment {
             }
         }
     };
+
     @Override
     public View initView() {
         View view = View.inflate(context, R.layout.fragment_local_video_pager, null);
         lv = (ListView) view.findViewById(R.id.lv);
         tv_nodata = (TextView) view.findViewById(R.id.tv_nodata);
+
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MediaItem item = adapter.getItem(position);
+                //把系统的播放器调起来
+                Intent intent = new Intent(context,SystemVideoPlayerActivity.class);
+                intent.setDataAndType(Uri.parse(item.getData()),"video/*");
+                startActivity(intent);
+            }
+        });
         return view;
     }
 
