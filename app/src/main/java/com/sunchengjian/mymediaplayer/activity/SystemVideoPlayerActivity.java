@@ -127,15 +127,15 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_system_video_player);
+        initdata();
         findViews();
         //  vv = (VideoView) findViewById(R.id.vv);
-        uri = getIntent().getData();
-        initdata();
-        setVideoLister();
 
+        uri = getIntent().getData();
         //将视频地址传给VV
         vv.setVideoURI(uri);
         vv.setMediaController(new MediaController(this));
+        setVideoLister();
     }
 
     private void initdata() {
@@ -146,6 +146,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
         intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
         registerReceiver(receiver, intentFilter);
     }
+
     //广播类
     class MyBroadCastReceiver extends BroadcastReceiver {
         @Override
@@ -227,7 +228,8 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
             public void onCompletion(MediaPlayer mp) {
                 Toast.makeText(SystemVideoPlayerActivity.this, "播放完成", Toast.LENGTH_SHORT).show();
                 //退出当前页面
-                finish();
+                // finish();
+                setNextVideo();
             }
         });
         seekbarVideo.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -254,14 +256,12 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
     public void onClick(View v) {
         if (v == btnVoice) {
             isMute = !isMute;
-
         } else if (v == btnSwitchPlayer) {
 
         } else if (v == btnExit) {
-
+            finish();
         } else if (v == btnPre) {
-
-
+            setPreVideo();
         } else if (v == btnStartPause) {
             if (vv.isPlaying()) {
                 vv.pause();
@@ -272,11 +272,10 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
             }
 
         } else if (v == btnNext) {
-
+            setNextVideo();
         } else if (v == btnSwitchScreen) {
 
             if (isFullScreen) {
-
 
             } else {
 
@@ -284,13 +283,74 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
         }
     }
 
+    //设置播放上一个视频
+    private void setPreVideo() {
+        position--;
+        if (position > 0) {
+
+            MediaItem mediaItem = mediaItems.get(position);
+            vv.setVideoPath(mediaItem.getData());
+            tvName.setText(mediaItem.getName());
+
+            setButtonStatus();
+        }
+    }
+    //设置播放下一个视频
+    private void setNextVideo() {
+        position++;
+        if (position < mediaItems.size()) {
+            MediaItem mediaItem = mediaItems.get(position);
+            vv.setVideoPath(mediaItem.getData());
+            tvName.setText(mediaItem.getName());
+            //设置按钮状态
+            setButtonStatus();
+        } else {
+            Toast.makeText(this, "退出播放器", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+
+    }
+    //a按钮设置点击为灰色，不点击白色 可点不可点
+    private void setButtonStatus() {
+        if (mediaItems != null && mediaItems.size() > 0) {
+            //有视频播放
+            setEnable(true);
+            if (position == 0) {
+                btnPre.setBackgroundResource(R.drawable.btn_pre_gray);
+                btnPre.setEnabled(false);
+            }
+            if (position == mediaItems.size() - 1) {
+                btnNext.setBackgroundResource(R.drawable.btn_next_gray);
+                btnNext.setEnabled(false);
+            }
+        } else if (uri != null) {
+            //上一个和下一个不可用点击
+            setEnable(false);
+        }
+    }
+
+    //按钮的可点与不可点
+    private void setEnable(boolean b) {
+        if (b) {
+            //上一个和下一个都可以点击
+            btnPre.setBackgroundResource(R.drawable.btn_pre_selector);
+            btnNext.setBackgroundResource(R.drawable.btn_next_selector);
+        } else {
+            //上一个和下一个灰色，并且不可用点击
+            btnPre.setBackgroundResource(R.drawable.btn_pre_gray);
+            btnNext.setBackgroundResource(R.drawable.btn_next_gray);
+        }
+        btnPre.setEnabled(b);
+        btnNext.setEnabled(b);
+    }
+
+
     @Override
     protected void onDestroy() {
         if (handler != null) {
             handler.removeCallbacksAndMessages(null);
             handler = null;
         }
-
         if (receiver != null) {
             unregisterReceiver(receiver);
             receiver = null;
