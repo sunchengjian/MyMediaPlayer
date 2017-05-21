@@ -1,5 +1,9 @@
 package com.sunchengjian.mymediaplayer.activity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -22,7 +26,9 @@ import com.sunchengjian.mymediaplayer.R;
 import com.sunchengjian.mymediaplayer.domain.MediaItem;
 import com.sunchengjian.mymediaplayer.utils.Utils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class SystemVideoPlayerActivity extends AppCompatActivity implements View.OnClickListener {
     private VideoView vv;
@@ -54,7 +60,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
     private Button btnNext;
     private Button btnSwitchScreen;
     private Utils utils;
-    //private MyBroadCastReceiver receiver;
+    private MyBroadCastReceiver receiver;
 
     private int position;
     //手势识别器
@@ -126,14 +132,48 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
         uri = getIntent().getData();
         initdata();
         setVideoLister();
-        //将视频地址传给VV
 
+        //将视频地址传给VV
         vv.setVideoURI(uri);
         vv.setMediaController(new MediaController(this));
     }
 
     private void initdata() {
         utils = new Utils();
+        receiver = new MyBroadCastReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        //监听电量变化
+        intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
+        registerReceiver(receiver, intentFilter);
+    }
+    //广播类
+    class MyBroadCastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int level = intent.getIntExtra("level", 0);//主线程
+            setBatteryView(level);
+
+        }
+    }
+
+    private void setBatteryView(int level) {
+        if (level <= 0) {
+            ivBattery.setImageResource(R.drawable.ic_battery_0);
+        } else if (level <= 10) {
+            ivBattery.setImageResource(R.drawable.ic_battery_10);
+        } else if (level <= 20) {
+            ivBattery.setImageResource(R.drawable.ic_battery_20);
+        } else if (level <= 40) {
+            ivBattery.setImageResource(R.drawable.ic_battery_40);
+        } else if (level <= 60) {
+            ivBattery.setImageResource(R.drawable.ic_battery_60);
+        } else if (level <= 80) {
+            ivBattery.setImageResource(R.drawable.ic_battery_80);
+        } else if (level <= 100) {
+            ivBattery.setImageResource(R.drawable.ic_battery_100);
+        } else {
+            ivBattery.setImageResource(R.drawable.ic_battery_100);
+        }
     }
 
     private Handler handler = new Handler() {
@@ -146,12 +186,21 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
                     seekbarVideo.setProgress(currentPosition);
 
                     tvCurrentTime.setText(utils.stringForTime(currentPosition));
+
+                    tvSystemTime.setText(getSystemTime());
                     sendEmptyMessageDelayed(PROGRESS, 1000);
                     break;
             }
         }
     };
 
+    //得到系统时间
+    private String getSystemTime() {
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+        return format.format(new Date());
+    }
+
+    //一些监听事件
     private void setVideoLister() {
         vv.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             //准备好时用到
@@ -159,7 +208,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
             public void onPrepared(MediaPlayer mp) {
                 int duration = vv.getDuration();
                 seekbarVideo.setMax(duration);
-                 tvDuration.setText(utils.stringForTime(duration));
+                tvDuration.setText(utils.stringForTime(duration));
                 vv.start();
                 handler.sendEmptyMessage(PROGRESS);
             }
@@ -237,7 +286,15 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
 
     @Override
     protected void onDestroy() {
+        if (handler != null) {
+            handler.removeCallbacksAndMessages(null);
+            handler = null;
+        }
+
+        if (receiver != null) {
+            unregisterReceiver(receiver);
+            receiver = null;
+        }
         super.onDestroy();
-        handler.removeCallbacksAndMessages(null);
     }
 }
