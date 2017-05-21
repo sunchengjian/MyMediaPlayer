@@ -35,19 +35,17 @@
             android:drawableTop="@drawable/rb_local_audio_selector"
             android:text="本地音频" />
 
+        <RadioButton
+            android:id="@+id/rb_net_video"
+            style="@style/myStyle"
+            android:drawableTop="@drawable/rb_net_video_selector"
+            android:text="网络视频" />
 
         <RadioButton
             android:id="@+id/rb_net_audio"
             style="@style/myStyle"
             android:drawableTop="@drawable/rb_net_audio_selector"
             android:text="网络音频" />
-
-
-        <RadioButton
-            android:id="@+id/rb_net_video"
-            style="@style/myStyle"
-            android:drawableTop="@drawable/rb_net_video_selector"
-            android:text="网络视频" />
 
 
     </RadioGroup>
